@@ -1,6 +1,8 @@
 // popup.js
 
-// 2. Convert mood to numeric label mapping
+// Import the specific function from our new systems-level datasetManager
+import { addSample } from './datasetManager.js';
+
 const MOOD_LABELS = {
   'Happy': 0,
   'Sad': 1,
@@ -18,20 +20,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const mood = e.currentTarget.getAttribute('data-mood');
       const moodLabel = MOOD_LABELS[mood];
       
-      // 1. Retrieve activity metrics from chrome.storage.local
-      chrome.storage.local.get(['telemetry', 'dataset'], (result) => {
+      // We no longer pull 'dataset' manually! Just telemetry metrics.
+      chrome.storage.local.get(['telemetry'], async (result) => {
         
-        // Safely extract metrics; default to zero if tracking hasn't fully initialized yet
         const telemetry = result.telemetry || {
           screen_time_minutes: 0,
           tab_switches: 0,
           unique_domains: 0
         };
-        
-        // Ensure the dataset array is initialized
-        let dataset = result.dataset || [];
 
-        // 3. Create training sample formatting { x: [metrics...], y: label }
         const sample = {
           x: [
             telemetry.screen_time_minutes,
@@ -41,32 +38,22 @@ document.addEventListener('DOMContentLoaded', () => {
           y: moodLabel
         };
         
-        // 4. Save sample to dataset array stored in chrome.storage.local
-        dataset.push(sample);
-        
-        chrome.storage.local.set({ dataset }, () => {
-          if (chrome.runtime.lastError) {
-            statusDiv.style.color = 'red';
-            statusDiv.textContent = 'Error saving sample.';
-            console.error(chrome.runtime.lastError);
-            return;
-          }
+        // Pass strictly to the designated system module manager to do dataset parsing.
+        try {
+          await addSample(sample);
           
           statusDiv.style.color = 'green';
-          statusDiv.textContent = 'Sample saved!';
+          statusDiv.textContent = 'Feedback registered!';
           
-          // Debugging console logs so you can verify the ML dataset looks correct
-          console.log(`[ML Dataset] Added sample:`, sample);
-          console.log(`[ML Dataset] Entire dataset:`, dataset);
-          
-          // Clear notification text after 2 seconds
           setTimeout(() => {
             statusDiv.textContent = '';
           }, 2000);
           
-          // (Optional) Retained the ping to background scripts so desktop notifications still work
-          chrome.runtime.sendMessage({ type: 'MOOD_LOGGED', mood });
-        });
+        } catch (error) {
+           console.error('[Popup] Systems integration failure:', error);
+           statusDiv.style.color = 'red';
+           statusDiv.textContent = 'Failed logic injection.';
+        }
       });
     });
   });

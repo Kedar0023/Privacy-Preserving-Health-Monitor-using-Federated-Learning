@@ -4,17 +4,30 @@
   "version": "1.0",
   "description": "Track your mood using Federated Learning.",
   "permissions": [
-    "tabs",
     "storage",
+    "alarms",
     "notifications",
-    "alarms"
+    "tabs"
   ],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "<all_urls>"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  },
   "background": {
     "service_worker": "src/background.js",
     "type": "module"
   },
+  "icons": {
+    "16": "public/favicon.svg",
+    "48": "public/favicon.svg",
+    "128": "public/favicon.svg"
+  },
   "action": {
     "default_popup": "index.html",
-    "default_title": "Log your mood"
+    "default_title": "Log your mood",
+    "default_icon": "public/favicon.svg"
   }
 }

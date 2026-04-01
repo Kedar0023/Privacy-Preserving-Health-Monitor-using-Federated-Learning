@@ -1,19 +1,22 @@
 // datasetManager.js
 
-/**
- * A systems-level module for managing the Chrome Extension's Federated Learning Dataset.
- * Handles inserting samples, retrieving the dataset, and evaluating model thresholds.
- */
+import { trainModel } from './trainer_pytorch.js';
+import { federatedLearningRound } from './federatedClient.js';
 
-// A placeholder/stub for triggering local federated learning model training.
+const TRAINING_THRESHOLD = 10;
+
 const triggerLocalModelTraining = async (dataset) => {
-  console.log('================================================');
-  console.log('🤖 Model Training Condition Met!');
-  console.log(`📦 Triggering training with ${dataset.length} samples.`);
-  console.log('📊 Current Dataset:', dataset);
-  console.log('================================================');
-  
-  // TODO: Insert TensorFlow.js or FL framework training sequence here
+  console.log(`[datasetManager] ${dataset.length} samples — triggering training...`);
+
+  chrome.runtime.sendMessage({ type: 'START_TRAINING', dataset }, (response) => {
+    if (chrome.runtime.lastError) {
+      // Popup is closed — store for next open
+      chrome.storage.local.set({ pendingTraining: dataset });
+      console.log('[datasetManager] Popup closed, dataset stored as pending.');
+    } else {
+      console.log('[datasetManager] Training started in popup.');
+    }
+  });
 };
 
 /**
@@ -29,23 +32,23 @@ export const addSample = async (sample) => {
       if (chrome.runtime.lastError) {
         return reject(chrome.runtime.lastError);
       }
-      
+
       const dataset = result.dataset || [];
       dataset.push(sample);
-      
+
       // Update the storage node with the new sample inclusive dataset list
       chrome.storage.local.set({ dataset }, () => {
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
         }
-        
+
         console.log(`[datasetManager] Sample added successfully. Total size: ${dataset.length}`);
-        
-        // Evaluate model training condition (Dataset >= 10 examples)
-        if (dataset.length >= 10) {
+
+        // Trigger training exactly when threshold is hit, then clear will reset it
+        if (dataset.length >= TRAINING_THRESHOLD) {
           triggerLocalModelTraining(dataset);
         }
-        
+
         resolve();
       });
     });

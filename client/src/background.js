@@ -8,26 +8,30 @@ const INITIAL_METRICS = {
 
 // Listen for the extension being installed or updated
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Mood Tracker with Telemetry installed.');
-  
+  console.log('[Background] Mood Tracker with Telemetry installed.');
+
   // Initialize storage with mood logs and initial telemetry metrics
-  chrome.storage.local.set({ 
+  chrome.storage.local.set({
     moodLogs: [],
     telemetry: INITIAL_METRICS,
     domainsSet: [],
     lastResetTime: Date.now()
   }, () => {
-    console.log('Storage initialized.');
+    console.log('[Background] Storage initialized.');
   });
-  
+
   // 5. Track active browsing time every minute
   // Using chrome.alarms is the Manifest V3 best practice to persist execution, 
   // as setInterval/setTimeout might pause when the service worker sleeps.
   chrome.alarms.create("telemetry_minute_tick", { periodInMinutes: 1 });
-  
+  console.log('[Background] Alarms created for telemetry tracking.');
+
   // Reset metrics every 60 minutes
   chrome.alarms.create("telemetry_reset", { periodInMinutes: 60 });
 });
+
+// Add a test function to verify background script is running
+console.log('[Background] Background script loaded successfully!');
 
 // Alarm listeners for our timed events
 chrome.alarms.onAlarm.addListener((alarm) => {
@@ -41,7 +45,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     });
   } else if (alarm.name === "telemetry_reset") {
     // Reset the tracking metrics
-    chrome.storage.local.set({ 
+    chrome.storage.local.set({
       telemetry: INITIAL_METRICS,
       domainsSet: [],
       lastResetTime: Date.now()
@@ -67,9 +71,10 @@ function extractDomain(url) {
 
 // 1. Detect tab switches using chrome.tabs.onActivated
 chrome.tabs.onActivated.addListener((activeInfo) => {
+  console.log(`[Background] Tab activated: ${activeInfo.tabId}`);
   chrome.storage.local.get(['telemetry'], (result) => {
     let telemetry = result.telemetry || { ...INITIAL_METRICS };
-    
+
     // Increment our tab switcher counter
     telemetry.tab_switches += 1;
     chrome.storage.local.set({ telemetry });
@@ -86,14 +91,14 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       chrome.storage.local.get(['telemetry', 'domainsSet'], (result) => {
         let telemetry = result.telemetry || { ...INITIAL_METRICS };
         let domainsSet = result.domainsSet || [];
-        
+
         // 4. Count unique domains visited by storing them in an array
         if (!domainsSet.includes(domain)) {
           domainsSet.push(domain);
           telemetry.unique_domains = domainsSet.length;
-          
+
           chrome.storage.local.set({ telemetry, domainsSet }, () => {
-             console.log(`[Telemetry] Unique Domain visited: ${domain} | Total unique: ${telemetry.unique_domains}`);
+            console.log(`[Telemetry] Unique Domain visited: ${domain} | Total unique: ${telemetry.unique_domains}`);
           });
         }
       });
@@ -106,7 +111,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'MOOD_LOGGED') {
     chrome.notifications.create({
       type: 'basic',
-      iconUrl: 'icon128.png', 
+      iconUrl: 'public/favicon.svg',
       title: 'Mood Tracker',
       message: `You recorded your mood as: ${message.mood}`,
       priority: 1

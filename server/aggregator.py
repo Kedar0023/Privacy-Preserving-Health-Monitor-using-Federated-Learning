@@ -1,29 +1,55 @@
-from typing import List, Dict
+import numpy as np
+from typing import List, Dict, Any
 from schemas import WeightUpdate
 from storage import storage
 
-def aggregate_weights(updates: List[WeightUpdate]) -> Dict[str, List[float]]:
+def aggregate_weights(client_updates: List[Dict[str, Any]]) -> Dict[str, np.ndarray]:
     """
-    Perform Federated Averaging (FedAvg) on the collected updates.
+    Perform Federated Averaging (FedAvg) using numpy on a list of client weight updates.
+    
+    Args:
+        client_updates: A list containing dictionaries of client weights.
+                        Example: [ weights_client1, weights_client2, ... ]
+    
+    Returns:
+        aggregated_global_weights: A dictionary of the averaged layer weights.
     """
-    if not updates:
-        return storage.get_global_model().weights
+    if not client_updates:
+        raise ValueError("No client updates provided for aggregation.")
 
-    total_samples = sum(u.num_samples for u in updates)
-    aggregated_weights: Dict[str, List[float]] = {}
-
-    # Initialize the aggregated_weights structure based on the first client
-    first_update_weights = updates[0].weights
-    for layer_name, weights in first_update_weights.items():
-        aggregated_weights[layer_name] = [0.0] * len(weights)
-
-    # Calculate the weighted average of the weights across all clients
-    for update in updates:
-        weight_factor = update.num_samples / total_samples
-        for layer_name, weights in update.weights.items():
-            for i, val in enumerate(weights):
-                aggregated_weights[layer_name][i] += val * weight_factor
-
+    num_clients = len(client_updates)
+    aggregated_weights = {}
+    
+    # Use the first client's update as the reference for shapes
+    reference_weights = client_updates[0]
+    
+    for layer_name, layer_weights in reference_weights.items():
+        # Convert to numpy array for numerical operations and shape validation
+        ref_array = np.array(layer_weights)
+        base_shape = ref_array.shape
+        
+        # Initialize accumulator for the mean
+        accumulator = np.zeros(base_shape)
+        
+        for i, client_w in enumerate(client_updates):
+            if layer_name not in client_w:
+                raise ValueError(f"Missing layer '{layer_name}' in client update index {i}.")
+            
+            client_array = np.array(client_w[layer_name])
+            
+            # Validate shape matches the reference client exactly
+            if client_array.shape != base_shape:
+                raise ValueError(
+                    f"Shape mismatch for layer '{layer_name}' in client update index {i}: "
+                    f"expected {base_shape}, got {client_array.shape}."
+                )
+                
+            accumulator += client_array
+            
+        # Compute the average for the current layer
+        aggregated_global_weights = accumulator / num_clients
+        aggregated_weights[layer_name] = aggregated_global_weights
+        
     return aggregated_weights
 
 def check_and_aggregate(threshold: int = 3):
@@ -33,8 +59,23 @@ def check_and_aggregate(threshold: int = 3):
     """
     updates = storage.get_updates()
     if len(updates) >= threshold:
-        new_weights = aggregate_weights(updates)
-        storage.update_global_model(new_weights)
-        storage.clear_updates()
-        return True
+        # Extract just the raw weights dictionary for the new aggregator function
+        client_weights_list = [u.weights for u in updates]
+        
+        try:
+            # Perform robust numpy averaging
+            new_weights_np = aggregate_weights(client_weights_list)
+            
+            # Convert numpy arrays back to standard Python lists for JSON serialization in the API
+            new_weights_list = {k: v.tolist() for k, v in new_weights_np.items()}
+            
+            storage.update_global_model(new_weights_list)
+            storage.clear_updates()
+            return True
+        except ValueError as e:
+            print(f"Aggregation failed: {e}")
+            # If clients send malformed data shapes, optionally clear updates and try again later
+            storage.clear_updates()
+            return False
+            
     return False

@@ -1,55 +1,73 @@
 // popup.js
 
-// Import the saveMood function from our ES6 storage module
-import { saveMood } from './storage.js';
+// 2. Convert mood to numeric label mapping
+const MOOD_LABELS = {
+  'Happy': 0,
+  'Sad': 1,
+  'Angry': 2,
+  'Tired': 3,
+  'Stressed': 4
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   const buttons = document.querySelectorAll('.mood-btn');
   const statusDiv = document.getElementById('status');
   
-  // Attach click event listeners to all 5 mood buttons
   buttons.forEach(button => {
-    button.addEventListener('click', async (e) => {
-      // Get the mood value from the data-mood attribute of the clicked button
+    button.addEventListener('click', (e) => {
       const mood = e.currentTarget.getAttribute('data-mood');
+      const moodLabel = MOOD_LABELS[mood];
       
-      try {
-        // Save the chosen mood using the storage module
-        await saveMood(mood);
+      // 1. Retrieve activity metrics from chrome.storage.local
+      chrome.storage.local.get(['telemetry', 'dataset'], (result) => {
         
-        // Display a brief success message in the popup
-        statusDiv.textContent = `Successfully logged: ${mood}`;
-        statusDiv.style.color = '#10b981';
+        // Safely extract metrics; default to zero if tracking hasn't fully initialized yet
+        const telemetry = result.telemetry || {
+          screen_time_minutes: 0,
+          tab_switches: 0,
+          unique_domains: 0
+        };
         
-        // Clear the status message after 2 seconds
-        setTimeout(() => {
-          statusDiv.textContent = '';
-        }, 2000);
-        
-        // Send a message to the background service worker to trigger a notification
-        chrome.runtime.sendMessage({ type: 'MOOD_LOGGED', mood }, (response) => {
-          if (chrome.runtime.lastError) {
-            console.error('Error sending message to background script:', chrome.runtime.lastError);
-          } else {
-            console.log('Background processed the log:', response);
-          }
-        });
-        
-        // Demonstrate usage of the "tabs" permission by logging the active tab URL
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-           if (tabs.length > 0) {
-               const activeTab = tabs[0];
-               console.log(`Mood logged while on tab: ${activeTab.url}`);
-               // Later, this could be used to associate the mood log with a specific URL for Federated Learning
-           }
-        });
+        // Ensure the dataset array is initialized
+        let dataset = result.dataset || [];
 
-      } catch (error) {
-        // Handle potential errors (e.g. storage quota exceeded)
-        console.error('Failed to log mood:', error);
-        statusDiv.textContent = 'Error logging mood.';
-        statusDiv.style.color = '#ef4444';
-      }
+        // 3. Create training sample formatting { x: [metrics...], y: label }
+        const sample = {
+          x: [
+            telemetry.screen_time_minutes,
+            telemetry.tab_switches,
+            telemetry.unique_domains
+          ],
+          y: moodLabel
+        };
+        
+        // 4. Save sample to dataset array stored in chrome.storage.local
+        dataset.push(sample);
+        
+        chrome.storage.local.set({ dataset }, () => {
+          if (chrome.runtime.lastError) {
+            statusDiv.style.color = 'red';
+            statusDiv.textContent = 'Error saving sample.';
+            console.error(chrome.runtime.lastError);
+            return;
+          }
+          
+          statusDiv.style.color = 'green';
+          statusDiv.textContent = 'Sample saved!';
+          
+          // Debugging console logs so you can verify the ML dataset looks correct
+          console.log(`[ML Dataset] Added sample:`, sample);
+          console.log(`[ML Dataset] Entire dataset:`, dataset);
+          
+          // Clear notification text after 2 seconds
+          setTimeout(() => {
+            statusDiv.textContent = '';
+          }, 2000);
+          
+          // (Optional) Retained the ping to background scripts so desktop notifications still work
+          chrome.runtime.sendMessage({ type: 'MOOD_LOGGED', mood });
+        });
+      });
     });
   });
 });

@@ -1,0 +1,635 @@
+:root {
+    --bg: #060b12;
+    --surface: #0c1524;
+    --surface2: #111e30;
+    --border: #162540;
+    --accent: #00d4ff;
+    --accent2: #7b4fff;
+    --text: #cde0f5;
+    --muted: #3d5e7e;
+    --c-happy: #00e5a0;
+    --r-happy: 0, 229, 160;
+    --c-sad: #4a9eff;
+    --r-sad: 74, 158, 255;
+    --c-angry: #ff5a5a;
+    --r-angry: 255, 90, 90;
+    --c-tired: #a78bfa;
+    --r-tired: 167, 139, 250;
+    --c-stressed: #ffb347;
+    --r-stressed: 255, 179, 71;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 360px;
+    min-height: 480px;
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+}
+
+/* subtle grain */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ── HEADER ── */
+.header {
+    position: relative;
+    padding: 20px 20px 16px;
+    background: linear-gradient(160deg, #0d1e35 0%, #080f1c 100%);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    z-index: 1;
+    animation: slide-up 0.4s 0s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+
+.header::after {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, transparent 65%);
+    animation: orb-drift 6s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+@keyframes orb-drift {
+    from {
+        transform: translate(0, 0) scale(1);
+    }
+
+    to {
+        transform: translate(-14px, 12px) scale(1.15);
+    }
+}
+
+.header-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.logo {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+}
+
+.logo svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.55));
+}
+
+.logo-ring {
+    animation: spin-slow 12s linear infinite;
+    transform-origin: 12px 12px;
+}
+
+@keyframes spin-slow {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.brand-block {
+    flex: 1;
+}
+
+.brand-name {
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.01em;
+    line-height: 1;
+}
+
+.brand-name span {
+    color: var(--accent);
+}
+
+.brand-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-top: 3px;
+}
+
+.badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(0, 229, 160, 0.07);
+    border: 1px solid rgba(0, 229, 160, 0.22);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: var(--c-happy);
+    letter-spacing: 0.1em;
+}
+
+.badge-dot {
+    width: 5px;
+    height: 5px;
+    background: var(--c-happy);
+    border-radius: 50%;
+    animation: blink 2.2s ease-in-out infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 5px var(--c-happy);
+    }
+
+    50% {
+        opacity: 0.3;
+        box-shadow: none;
+    }
+}
+
+.header-caption {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.header-caption b {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* ── SECTION ── */
+.section {
+    padding: 18px 20px 0;
+    position: relative;
+    z-index: 1;
+    animation: slide-up 0.4s 0.1s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+
+.section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+/* ── MOOD GRID ── */
+.mood-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+/* ── MOOD BUTTON ── */
+.mood-btn {
+    --c: var(--accent);
+    --r: 0, 212, 255;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 18px 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    overflow: hidden;
+    font-family: 'Syne', sans-serif;
+    color: var(--text);
+    transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1),
+        border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mood-btn[data-mood="Happy"] {
+    --c: var(--c-happy);
+    --r: var(--r-happy);
+}
+
+.mood-btn[data-mood="Sad"] {
+    --c: var(--c-sad);
+    --r: var(--r-sad);
+}
+
+.mood-btn[data-mood="Angry"] {
+    --c: var(--c-angry);
+    --r: var(--r-angry);
+}
+
+.mood-btn[data-mood="Tired"] {
+    --c: var(--c-tired);
+    --r: var(--r-tired);
+}
+
+.mood-btn[data-mood="Stressed"] {
+    --c: var(--c-stressed);
+    --r: var(--r-stressed);
+    grid-column: span 2;
+    flex-direction: row;
+    gap: 12px;
+    padding: 16px 24px;
+}
+
+/* Staggered card entrance */
+.mood-btn:nth-child(1) {
+    animation: card-in 0.4s 0.12s both;
+}
+
+.mood-btn:nth-child(2) {
+    animation: card-in 0.4s 0.18s both;
+}
+
+.mood-btn:nth-child(3) {
+    animation: card-in 0.4s 0.24s both;
+}
+
+.mood-btn:nth-child(4) {
+    animation: card-in 0.4s 0.30s both;
+}
+
+.mood-btn:nth-child(5) {
+    animation: card-in 0.4s 0.36s both;
+}
+
+@keyframes card-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Shimmer sweep on hover */
+.mood-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(105deg, transparent 20%, rgba(255, 255, 255, 0.07) 50%, transparent 80%);
+    transition: left 0s;
+    pointer-events: none;
+}
+
+.mood-btn:hover::before {
+    left: 160%;
+    transition: left 0.55s ease;
+}
+
+/* Hover lift + glow */
+.mood-btn:hover {
+    transform: translateY(-3px) scale(1.02);
+    border-color: var(--c);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5),
+        0 0 0 1px var(--c),
+        0 0 18px -4px var(--c),
+        inset 0 0 20px rgba(var(--r), 0.06);
+    background: color-mix(in srgb, var(--c) 6%, var(--surface));
+}
+
+/* Press squish */
+.mood-btn:active {
+    transform: scale(0.94) translateY(1px);
+    transition: transform 0.08s ease;
+}
+
+/* Selected state */
+.mood-btn.selected {
+    border-color: var(--c);
+    background: color-mix(in srgb, var(--c) 12%, var(--surface));
+    box-shadow: 0 0 0 1px var(--c), 0 0 24px -6px var(--c),
+        inset 0 0 30px rgba(var(--r), 0.09);
+}
+
+/* Spinning conic border on selected */
+@property --angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+
+.mood-btn.selected::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 15px;
+    background: conic-gradient(from var(--angle), transparent 0deg, var(--c) 60deg, transparent 120deg);
+    animation: border-spin 2.4s linear infinite;
+    z-index: -1;
+    opacity: 0.55;
+}
+
+@keyframes border-spin {
+    to {
+        --angle: 360deg;
+    }
+}
+
+/* Emoji */
+.mood-emoji {
+    font-size: 28px;
+    line-height: 1;
+    display: block;
+    transition: transform 0.2s ease;
+    will-change: transform;
+}
+
+.mood-btn:hover .mood-emoji {
+    transform: scale(1.15) rotate(-5deg);
+}
+
+/* Pop + wiggle on select */
+.mood-btn.selected .mood-emoji {
+    animation: emoji-pop 0.45s cubic-bezier(0.34, 1.7, 0.64, 1) forwards,
+        emoji-wiggle 0.5s 0.1s ease forwards;
+}
+
+@keyframes emoji-pop {
+    0% {
+        transform: scale(1);
+    }
+
+    40% {
+        transform: scale(1.55) rotate(8deg);
+    }
+
+    70% {
+        transform: scale(0.9) rotate(-4deg);
+    }
+
+    100% {
+        transform: scale(1.1) rotate(0deg);
+    }
+}
+
+@keyframes emoji-wiggle {
+
+    0%,
+    100% {
+        transform: scale(1.1) rotate(0deg);
+    }
+
+    25% {
+        transform: scale(1.1) rotate(-6deg);
+    }
+
+    75% {
+        transform: scale(1.1) rotate(6deg);
+    }
+}
+
+.mood-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    transition: color 0.2s;
+}
+
+.mood-btn.selected .mood-label {
+    color: var(--c);
+}
+
+/* Particle burst */
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: particle-fly 0.65s ease-out forwards;
+}
+
+@keyframes particle-fly {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(var(--tx), var(--ty)) scale(0);
+        opacity: 0;
+    }
+}
+
+/* Ripple */
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(var(--r, 0, 212, 255), 0.18);
+    transform: scale(0);
+    animation: ripple-expand 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    pointer-events: none;
+}
+
+@keyframes ripple-expand {
+    to {
+        transform: scale(4.5);
+        opacity: 0;
+    }
+}
+
+/* ── FL STRIP ── */
+.fl-strip {
+    margin: 16px 20px 0;
+    background: linear-gradient(100deg, rgba(123, 79, 255, 0.07), rgba(0, 212, 255, 0.07));
+    border: 1px solid rgba(123, 79, 255, 0.18);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+    animation: slide-up 0.4s 0.3s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+
+.fl-hex {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    background: rgba(123, 79, 255, 0.12);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(123, 79, 255, 0.25);
+}
+
+.fl-hex svg {
+    width: 16px;
+    height: 16px;
+}
+
+.fl-copy {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.fl-copy strong {
+    color: var(--accent2);
+    font-size: 11px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 1px;
+}
+
+/* ── STATUS ── */
+.status-bar {
+    padding: 12px 20px 18px;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+#status {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--c-happy);
+    letter-spacing: 0.08em;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#status.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#status::before {
+    content: '▶ ';
+    color: var(--accent);
+    font-size: 7px;
+}
+
+/* ── CONFIRM OVERLAY ── */
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6, 11, 18, 0.88);
+    backdrop-filter: blur(8px);
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.confirm-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.confirm-ring {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.confirm-ring svg {
+    width: 80px;
+    height: 80px;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.confirm-ring-circle {
+    fill: none;
+    stroke: var(--c-happy);
+    stroke-width: 2.5;
+    stroke-dasharray: 226;
+    stroke-dashoffset: 226;
+    stroke-linecap: round;
+    transform-origin: 40px 40px;
+    transform: rotate(-90deg);
+    transition: stroke-dashoffset 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.confirm-overlay.active .confirm-ring-circle {
+    stroke-dashoffset: 0;
+}
+
+.confirm-check {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    transform: scale(0);
+    transition: transform 0.35s 0.55s cubic-bezier(0.34, 1.7, 0.64, 1);
+}
+
+.confirm-overlay.active .confirm-check {
+    transform: scale(1);
+}
+
+.confirm-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.confirm-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-align: center;
+}
+
+@keyframes slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
